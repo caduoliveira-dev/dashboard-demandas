@@ -166,17 +166,17 @@ export default function DemandaAdministrativa(){
                             <Package2 className="h-6 w-6" />
                             <span className="sr-only">Acme Inc</span>
                         </Link>
-                        <Link href="#" className="hover:text-foreground">
+                        <Link href="/" className="hover:text-foreground">
                             Dashboard
                         </Link>
                         <Link
-                            href="#"
+                            href="/demanda-administrativa"
                             className="text-muted-foreground hover:text-foreground"
                         >
                             Demandas Administrativas
                         </Link>
                         <Link
-                            href="#"
+                            href="/demanda-judicial"
                             className="text-muted-foreground hover:text-foreground"
                         >
                             Demandas Judiciais
@@ -213,14 +213,14 @@ export default function DemandaAdministrativa(){
                 </header>
 
                 <div className="flex flex-row items-center justify-between p-8">
-                    <h1 className="text-2xl font-bold">Demandas Administrativas</h1>
+                    <h1 className="text-2xl font-bold">Demandas Judiciais</h1>
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="outline">Inserir Demanda</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[720px]">
                             <DialogHeader>
-                            <DialogTitle>Inserir Demanda Administrativa</DialogTitle>
+                            <DialogTitle>Inserir Demanda Judicial</DialogTitle>
                             <DialogDescription>
                                 Preencha todos os campos.
                             </DialogDescription>
@@ -367,13 +367,13 @@ export default function DemandaAdministrativa(){
                     <TableBody>
                     <TableRow>
                         <TableCell>
-                        <div className="font-medium">15/08/2024</div>
+                        <div className="font-medium">31/08/2024</div>
                         </TableCell>
-                        <TableCell>Fulano de tal</TableCell>
-                        <TableCell>Ciclano</TableCell>
-                        <TableCell>Procuradoria Geral do Estado</TableCell>
-                        <TableCell>30/08/2024</TableCell>
-                        <TableCell className="w-[300px]">FORNECIMENTO DOS MEDICAMENTOS RITALINA 30MG ÁCIDO VALPRÓICO 500MG ARIPRIPRAZOL 10 MG TOPIRAMATO 50MG E MELATONINA 10MG</TableCell>
+                        <TableCell>Beltrano da SIlva Cardozo</TableCell>
+                        <TableCell>Juscelino Kubitschek</TableCell>
+                        <TableCell>Ministério Público do Estado do Tocantins</TableCell>
+                        <TableCell>15/09/2024</TableCell>
+                        <TableCell className="w-[300px]">ENCAMINHAMENTO DE OFICIO N 0318/2024/GAB/27PJC/MPE/TO COM DILEGÊNCIA 25517/2024</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>

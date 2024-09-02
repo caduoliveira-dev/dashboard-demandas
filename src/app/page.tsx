@@ -3,6 +3,7 @@
 import Link from "next/link"
 import {
   ArrowUpRight,
+  Search,
   CircleUser,
   Scale,
   BriefcaseBusiness,
@@ -92,6 +93,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+import { Input } from "@/components/ui/input"
+
 import { ScrollArea } from "@/components/ui/scroll-area"
 export const description =
   "An application shell with a header and main content area. The header has a navbar, a search input and and a user nav dropdown. The user nav is toggled by a button with an avatar image. The main content area is divided into two rows. The first row has a grid of cards with statistics. The second row has a grid of cards with a table of recent transactions and a list of recent sales."
@@ -127,7 +130,7 @@ export default function Home() {
             Demandas Administrativas
           </Link>
           <Link
-            href="#"
+            href="/demanda-judicial"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Demandas Judiciais
@@ -253,12 +256,20 @@ export default function Home() {
             </CardContent>
           </Card> */}
         </div>
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-4">
-          <ScrollArea className="h-80 w-48 md:h-96 md:w-full rounded-xl border">
+        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-2">
+          <ScrollArea className="h-80 w-full md:h-96 md:w-full rounded-xl border">
             <CardHeader className="flex flex-row justify-between">
               <div>
                 <CardTitle className="w-16 md:w-72">Relação das Demandas Vencidas</CardTitle>
                 <CardDescription>2024</CardDescription>
+                <div className="relative ml-auto mt-4 flex-1 md:grow-0">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        type="search"
+                        placeholder="Procurar Demanda"
+                        className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+                        />
+                </div>
               </div>
               <div>
               <Button asChild size="sm" className="ml-auto gap-1">
