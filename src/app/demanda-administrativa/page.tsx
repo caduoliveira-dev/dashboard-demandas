@@ -1,12 +1,15 @@
-import dbClient from "@/db/mongodb"
+'use client'
 
-import { redirect } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from 'react'
+import { createDemanda, getDemandas, Demanda } from './actions'
+
+
 
 import Link from "next/link"
 
 import {
     CircleUser,
-    CalendarIcon,
     Search,
     Menu,
     Package2,
@@ -51,37 +54,79 @@ import {
 import { Label } from "@/components/ui/label"
 
 import { Textarea } from "@/components/ui/textarea"
+import { DialogClose } from "@radix-ui/react-dialog"
 
 export default function DemandaAdministrativa(){
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [demandas, setDemandas] = useState<Demanda[]>([])
+    const [formData, setFormData] = useState<Omit<Demanda, '_id'>>({
+        dataCadastro: '',
+        sgd: '',
+        assunto: '',
+        orgao: '',
+        municipio: '',
+        paciente: '',
+        solicitante: '',
+        dataVencimento: '',
+  })
 
-    // server action
+  useEffect(() => {
+    fetchDemandas()
+  }, [])
 
-    const createDemanda = async (formData: FormData) => {
-        "use server"
-        const dataCadastro = formData.get('data-cadastro') as string
-        const sgd = formData.get('sgd') as string
-        const assunto = formData.get('assunto') as string
-        const orgao = formData.get('orgao') as string
-        const municipio = formData.get('municipio') as string
-        const paciente = formData.get('paciente') as string
-        const solicitante = formData.get('solicitante') as string
-        const dataVencimento = formData.get('data-vencimento') as string
-
-        const demanda = await dbClient
-        .db('demandas')
-        .collection('demanda-administrativa')
-        .insertOne(
-        {dataCadastro,
-        sgd,
-        assunto,
-        orgao,
-        municipio,
-        paciente,
-        solicitante,
-        dataVencimento})
-    
-
+  const fetchDemandas = async () => {
+    try {
+      const fetchedDemandas = await getDemandas()
+      setDemandas(fetchedDemandas)
+    } catch (error) {
+      console.error('Error fetching demandas:', error)
+      alert('Falha ao carregar demandas')
     }
+  }
+    // server actioN
+    const { toast } = useToast()
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        const formDataToSubmit = new FormData()
+        Object.entries(formData).forEach(([key, value]) => {
+          formDataToSubmit.append(key, value)
+        })
+        const result = await createDemanda(formDataToSubmit)
+        if (result.acknowledged) {
+          console.log(`Demanda created with ID: ${result.insertedId}`)
+          setFormData({
+            dataCadastro: '',
+            sgd: '',
+            assunto: '',
+            orgao: '',
+            municipio: '',
+            paciente: '',
+            solicitante: '',
+            dataVencimento: '',
+          })
+          setIsDialogOpen(true)
+          toast({
+            title: "Sucesso",
+            variant: "sucess",
+            description: "Demanda Cadastrada",
+            duration: 3000,
+          })
+          fetchDemandas()
+        } else {
+            toast({
+                title: "Erro",
+                variant: "destructive",
+                description: "Erro ao cadastrar demanda!",
+                duration: 3000,
+              })
+        }
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target
+        setFormData(prev => ({ ...prev, [name]: value }))
+      }
 
     return (
         <>
@@ -189,7 +234,7 @@ export default function DemandaAdministrativa(){
                 <div className="flex flex-row items-center justify-between p-8">
                     <h1 className="text-2xl font-bold">Demandas Administrativas</h1>
                     
-                    <Dialog>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline">Inserir Demanda</Button>
                         </DialogTrigger>
@@ -200,7 +245,7 @@ export default function DemandaAdministrativa(){
                                 Preencha todos os campos.
                             </DialogDescription>
                             </DialogHeader>
-                            <form action={createDemanda}>
+                            <form onSubmit={handleSubmit}>
                                 <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="data-cadastro" className="text-right">
@@ -208,9 +253,11 @@ export default function DemandaAdministrativa(){
                                     </Label>
                                     <Input
                                     type="date"
-                                    name="data-cadastro"
+                                    name="dataCadastro"
                                     id="data-cadastro"
                                     className="col-span-1"
+                                    value={formData.dataCadastro}
+                                    onChange={handleInputChange}
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
@@ -218,16 +265,25 @@ export default function DemandaAdministrativa(){
                                     SGD:
                                     </Label>
                                     <Input
+                                    type="text"
                                     name="sgd"
                                     id="sgd"
                                     className="col-span-3"
+                                    value={formData.sgd}
+                                    onChange={handleInputChange}
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 gap-4">
                                     <Label htmlFor="assunto" className="text-right">
                                     Assunto:
                                     </Label>
-                                    <Textarea name="assunto" id="assunto" className="col-span-3 h-48" placeholder="Assunto da demanda">
+                                    <Textarea 
+                                    name="assunto" 
+                                    id="assunto" 
+                                    className="col-span-3 h-48" 
+                                    placeholder="Assunto da demanda"
+                                    value={formData.assunto}
+                                    onChange={handleInputChange}>
 
                                     </Textarea>
                                 </div>
@@ -236,9 +292,12 @@ export default function DemandaAdministrativa(){
                                     Orgão:
                                     </Label>
                                     <Input
+                                    type="text"
                                     name="orgao"
                                     id="orgao"
                                     className="col-span-3"
+                                    value={formData.orgao}
+                                    onChange={handleInputChange}
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
@@ -246,9 +305,12 @@ export default function DemandaAdministrativa(){
                                     Município:
                                     </Label>
                                     <Input
+                                    type="text"
                                     name="municipio"
                                     id="municipio"
                                     className="col-span-3"
+                                    value={formData.municipio}
+                                    onChange={handleInputChange}
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
@@ -256,9 +318,12 @@ export default function DemandaAdministrativa(){
                                     Paciente:
                                     </Label>
                                     <Input
+                                    type="text"
                                     name="paciente"
                                     id="paciente"
                                     className="col-span-3"
+                                    value={formData.paciente}
+                                    onChange={handleInputChange}
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
@@ -266,9 +331,12 @@ export default function DemandaAdministrativa(){
                                     Solicitante:
                                     </Label>
                                     <Input
+                                    type="text"
                                     name="solicitante"
                                     id="solicitante"
                                     className="col-span-3"
+                                    value={formData.solicitante}
+                                    onChange={handleInputChange}
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
@@ -277,15 +345,20 @@ export default function DemandaAdministrativa(){
                                     </Label>
                                     <Input
                                     type="date"
-                                    name="data-vencimento"
+                                    name="dataVencimento"
                                     id="data-vencimento"
                                     className="col-span-1"
+                                    value={formData.dataVencimento}
+                                    onChange={handleInputChange}
                                     />
                                     
                                 </div>
                                 </div>
                             <DialogFooter className="flex flex-row justify-end">
-                            <Button className="pr-4" type="submit" variant="destructive">Cancelar</Button>
+                                <DialogClose asChild>
+                                    <Button className="pr-4" type="button" variant="destructive">Cancelar</Button>
+                                </DialogClose>
+                                
                                 <Button type="submit">Inserir</Button>
                             </DialogFooter>
                             </form>
@@ -307,24 +380,35 @@ export default function DemandaAdministrativa(){
                     <TableHeader>
                         <TableRow>
                         <TableHead className="w-[150px]">Data</TableHead>
-                        <TableHead>Solicitante</TableHead>
+                        <TableHead>Solicitante/SGD</TableHead>
                         <TableHead>Paciente</TableHead>
                         <TableHead>Orgão</TableHead>
                         <TableHead>Data de Vencimento</TableHead>
-                        <TableHead>Assunto</TableHead>
+                        <TableHead className="hidden md:table-cell">Assunto</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                    <TableRow>
-                        <TableCell>
-                        <div className="font-medium">15/08/2024</div>
-                        </TableCell>
-                        <TableCell>Fulano de tal</TableCell>
-                        <TableCell>Ciclano</TableCell>
-                        <TableCell>Procuradoria Geral do Estado</TableCell>
-                        <TableCell>30/08/2024</TableCell>
-                        <TableCell className="w-[300px]">FORNECIMENTO DOS MEDICAMENTOS RITALINA 30MG ÁCIDO VALPRÓICO 500MG ARIPRIPRAZOL 10 MG TOPIRAMATO 50MG E MELATONINA 10MG</TableCell>
-                        </TableRow>
+                        {demandas.map((demanda) => (
+                            <TableRow key={demanda._id}>
+                                <TableCell>
+                                    <div className="font-medium w-[100px]">{demanda.dataCadastro}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="font-medium w-[150px]">{demanda.solicitante.toUpperCase()}</div>
+                                    <div className="text-sm text-muted-foreground italic">{demanda.sgd}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="w-[150px]">{demanda.paciente.toUpperCase()}</div>
+                                </TableCell>
+                                <TableCell>{demanda.orgao.toUpperCase()}</TableCell>
+                                <TableCell>
+                                    <div className="w-[150px]">{demanda.dataVencimento}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="hidden md:table-cell">{demanda.assunto.toUpperCase()}</div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
                 </div>

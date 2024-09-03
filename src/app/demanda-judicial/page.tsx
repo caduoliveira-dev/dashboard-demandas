@@ -1,7 +1,8 @@
 "use client"
-import { useState } from "react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+
+import { useToast } from "@/hooks/use-toast"
+import { useState } from 'react'
+import { createDemanda } from './actions'
 
 import Link from "next/link"
 
@@ -61,54 +62,65 @@ import {
 import { cn } from "@/lib/utils"
 
 import { Textarea } from "@/components/ui/textarea"
+import { DialogClose } from "@radix-ui/react-dialog"
 
-  const invoices = [
-    {
-      invoice: "INV001",
-      paymentStatus: "Paid",
-      totalAmount: "$250.00",
-      paymentMethod: "Credit Card",
-    },
-    {
-      invoice: "INV002",
-      paymentStatus: "Pending",
-      totalAmount: "$150.00",
-      paymentMethod: "PayPal",
-    },
-    {
-      invoice: "INV003",
-      paymentStatus: "Unpaid",
-      totalAmount: "$350.00",
-      paymentMethod: "Bank Transfer",
-    },
-    {
-      invoice: "INV004",
-      paymentStatus: "Paid",
-      totalAmount: "$450.00",
-      paymentMethod: "Credit Card",
-    },
-    {
-      invoice: "INV005",
-      paymentStatus: "Paid",
-      totalAmount: "$550.00",
-      paymentMethod: "PayPal",
-    },
-    {
-      invoice: "INV006",
-      paymentStatus: "Pending",
-      totalAmount: "$200.00",
-      paymentMethod: "Bank Transfer",
-    },
-    {
-      invoice: "INV007",
-      paymentStatus: "Unpaid",
-      totalAmount: "$300.00",
-      paymentMethod: "Credit Card",
-    },
-  ]
 
 export default function DemandaAdministrativa(){
-    const [date, setDate] = useState<Date>()
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [formData, setFormData] = useState({
+    dataCadastro: '',
+    sgd: '',
+    assunto: '',
+    orgao: '',
+    municipio: '',
+    paciente: '',
+    solicitante: '',
+    dataVencimento: '',
+  })
+
+    const { toast } = useToast()
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formDataToSubmit = new FormData()
+    Object.entries(formData).forEach(([key, value]) => {
+      formDataToSubmit.append(key, value)
+    })
+
+    const result = await createDemanda(formDataToSubmit)
+    if (result.acknowledged) {
+      console.log(`Demanda created with ID: ${result.insertedId}`)
+      setFormData({
+        dataCadastro: '',
+        sgd: '',
+        assunto: '',
+        orgao: '',
+        municipio: '',
+        paciente: '',
+        solicitante: '',
+        dataVencimento: '',
+      })
+      setIsDialogOpen(true)
+      toast({
+        title: "Sucesso",
+        variant: "sucess",
+        description: "Demanda Cadastrada",
+        duration: 3000,
+      })
+    } else {
+        toast({
+            title: "Erro",
+            variant: "destructive",
+            description: "Erro ao cadastrar demanda!",
+            duration: 3000,
+          })
+    }
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target
+        setFormData(prev => ({ ...prev, [name]: value }))
+    }
     return (
         <>
             <div className="flex min-h-screen w-full flex-col">
@@ -214,7 +226,7 @@ export default function DemandaAdministrativa(){
 
                 <div className="flex flex-row items-center justify-between p-8">
                     <h1 className="text-2xl font-bold">Demandas Judiciais</h1>
-                    <Dialog>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline">Inserir Demanda</Button>
                         </DialogTrigger>
@@ -225,121 +237,123 @@ export default function DemandaAdministrativa(){
                                 Preencha todos os campos.
                             </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="data-cadastro" className="text-right">
-                                Data do Cadastro
-                                </Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !date && "text-muted-foreground"
-                                        )}
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        initialFocus
-                                        locale={ptBR}
-                                        />
-                                    </PopoverContent>
-                            </Popover>
+                            <form onSubmit={handleSubmit}>
+                                <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="data-cadastro" className="text-right">
+                                    Data do Cadastro
+                                    </Label>
+                                    <Input
+                                    type="date"
+                                    name="dataCadastro"
+                                    id="data-cadastro"
+                                    className="col-span-1"
+                                    value={formData.dataCadastro}
+                                    onChange={handleInputChange}
+                                    />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="sgd" className="text-right">
-                                SGD:
-                                </Label>
-                                <Input
-                                id="sgd"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 gap-4">
-                                <Label htmlFor="assunto" className="text-right">
-                                Assunto:
-                                </Label>
-                                <Textarea className="col-span-3 h-48" placeholder="Assunto da demanda">
+                                    <Label htmlFor="sgd" className="text-right">
+                                    SGD:
+                                    </Label>
+                                    <Input
+                                    type="text"
+                                    name="sgd"
+                                    id="sgd"
+                                    className="col-span-3"
+                                    value={formData.sgd}
+                                    onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 gap-4">
+                                    <Label htmlFor="assunto" className="text-right">
+                                    Assunto:
+                                    </Label>
+                                    <Textarea 
+                                    name="assunto" 
+                                    id="assunto" 
+                                    className="col-span-3 h-48" 
+                                    placeholder="Assunto da demanda"
+                                    value={formData.assunto}
+                                    onChange={handleInputChange}>
 
-                                </Textarea>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="orgao" className="text-right">
-                                Orgão:
-                                </Label>
-                                <Input
-                                id="orgao"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="municipio" className="text-right">
-                                Município:
-                                </Label>
-                                <Input
-                                id="municipio"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="paciente" className="text-right">
-                                Paciente:
-                                </Label>
-                                <Input
-                                id="paciente"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="solicitante" className="text-right">
-                                Solicitante:
-                                </Label>
-                                <Input
-                                id="solicitante"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="data-vencimento" className="text-right">
-                                Data de Vencimento
-                                </Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !date && "text-muted-foreground"
-                                        )}
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        initialFocus
-                                        locale={ptBR}
-                                        />
-                                    </PopoverContent>
-                            </Popover>
-                            </div>
+                                    </Textarea>
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="orgao" className="text-right">
+                                    Orgão:
+                                    </Label>
+                                    <Input
+                                    type="text"
+                                    name="orgao"
+                                    id="orgao"
+                                    className="col-span-3"
+                                    value={formData.orgao}
+                                    onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="municipio" className="text-right">
+                                    Município:
+                                    </Label>
+                                    <Input
+                                    type="text"
+                                    name="municipio"
+                                    id="municipio"
+                                    className="col-span-3"
+                                    value={formData.municipio}
+                                    onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="paciente" className="text-right">
+                                    Paciente:
+                                    </Label>
+                                    <Input
+                                    type="text"
+                                    name="paciente"
+                                    id="paciente"
+                                    className="col-span-3"
+                                    value={formData.paciente}
+                                    onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="solicitante" className="text-right">
+                                    Solicitante:
+                                    </Label>
+                                    <Input
+                                    type="text"
+                                    name="solicitante"
+                                    id="solicitante"
+                                    className="col-span-3"
+                                    value={formData.solicitante}
+                                    onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="data-vencimento" className="text-right">
+                                    Data de Vencimento
+                                    </Label>
+                                    <Input
+                                    type="date"
+                                    name="dataVencimento"
+                                    id="data-vencimento"
+                                    className="col-span-1"
+                                    value={formData.dataVencimento}
+                                    onChange={handleInputChange}
+                                    />
+                                </div>
                             </div>
                             <DialogFooter className="flex flex-row justify-end">
-                            <Button className="pr-4" type="submit" variant="destructive">Cancelar</Button>
+                                <DialogClose asChild>
+                                    <Button className="pr-4" type="submit" variant="destructive">Cancelar</Button>
+                                </DialogClose>
+                            
                             <Button type="submit">Inserir</Button>
                             </DialogFooter>
+                            </form>
+                            
                         </DialogContent>
                     </Dialog>
                 </div>
