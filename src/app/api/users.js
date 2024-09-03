@@ -6,12 +6,12 @@ export default async function handler(req, res) {
 
   switch (req.method) {
     case "GET":
-      const users = await db.collection("users").find({}).toArray()
+      const users = await db.collection("demanda-administrativa").find({}).toArray()
       res.json(users)
       break
     case "POST":
       const newUser = req.body
-      const result = await db.collection("users").insertOne(newUser)
+      const result = await db.collection("demanda-administrativa").insertOne(newUser)
       res.json(result)
       break
     default:

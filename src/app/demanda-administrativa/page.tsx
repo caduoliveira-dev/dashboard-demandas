@@ -13,6 +13,7 @@ import {
     Search,
     Menu,
     Package2,
+    PlusCircle,
   } from "lucide-react"
 
 
@@ -68,6 +69,7 @@ export default function DemandaAdministrativa(){
         paciente: '',
         solicitante: '',
         dataVencimento: '',
+        resposta: ''
   })
 
   useEffect(() => {
@@ -104,6 +106,7 @@ export default function DemandaAdministrativa(){
             paciente: '',
             solicitante: '',
             dataVencimento: '',
+            resposta: ''
           })
           setIsDialogOpen(true)
           toast({
@@ -126,7 +129,7 @@ export default function DemandaAdministrativa(){
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
-      }
+    }
 
     return (
         <>
@@ -350,8 +353,21 @@ export default function DemandaAdministrativa(){
                                     className="col-span-1"
                                     value={formData.dataVencimento}
                                     onChange={handleInputChange}
-                                    />
-                                    
+                                    />                                  
+                                </div>
+                                <div className="grid grid-cols-4 gap-4">
+                                    <Label htmlFor="resposta" className="text-right">
+                                    Resposta:
+                                    </Label>
+                                    <Textarea disabled
+                                    name="resposta" 
+                                    id="resposta" 
+                                    className="col-span-3 h-48" 
+                                    placeholder=""
+                                    value={formData.resposta}
+                                    onChange={handleInputChange}>
+
+                                    </Textarea>
                                 </div>
                                 </div>
                             <DialogFooter className="flex flex-row justify-end">
@@ -385,6 +401,7 @@ export default function DemandaAdministrativa(){
                         <TableHead>Orgão</TableHead>
                         <TableHead>Data de Vencimento</TableHead>
                         <TableHead className="hidden md:table-cell">Assunto</TableHead>
+                        <TableHead className="w=[100px]">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -411,6 +428,7 @@ export default function DemandaAdministrativa(){
                         ))}
                     </TableBody>
                 </Table>
+
                 </div>
                 
             </div>

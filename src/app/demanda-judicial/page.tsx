@@ -1,20 +1,18 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
-import { useState } from 'react'
-import { createDemanda } from './actions'
+import { useState, useEffect } from 'react'
+import { createDemanda, getDemandas, Demanda } from './actions'
 
 import Link from "next/link"
 
 import {
     CircleUser,
-    CalendarIcon,
     Search,
     Menu,
     Package2,
+    Edit
   } from "lucide-react"
-
-import { Calendar } from "@/components/ui/calendar"
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -53,44 +51,14 @@ import {
 
 import { Label } from "@/components/ui/label"
 
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
-
-import { cn } from "@/lib/utils"
-
 import { Textarea } from "@/components/ui/textarea"
 import { DialogClose } from "@radix-ui/react-dialog"
 
 
 export default function DemandaAdministrativa(){
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [formData, setFormData] = useState({
-    dataCadastro: '',
-    sgd: '',
-    assunto: '',
-    orgao: '',
-    municipio: '',
-    paciente: '',
-    solicitante: '',
-    dataVencimento: '',
-  })
-
-    const { toast } = useToast()
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formDataToSubmit = new FormData()
-    Object.entries(formData).forEach(([key, value]) => {
-      formDataToSubmit.append(key, value)
-    })
-
-    const result = await createDemanda(formDataToSubmit)
-    if (result.acknowledged) {
-      console.log(`Demanda created with ID: ${result.insertedId}`)
-      setFormData({
+    const [demandas, setDemandas] = useState<Demanda[]>([])
+    const [formData, setFormData] = useState<Omit<Demanda, '_id'>>({
         dataCadastro: '',
         sgd: '',
         assunto: '',
@@ -99,28 +67,68 @@ export default function DemandaAdministrativa(){
         paciente: '',
         solicitante: '',
         dataVencimento: '',
-      })
-      setIsDialogOpen(true)
-      toast({
-        title: "Sucesso",
-        variant: "sucess",
-        description: "Demanda Cadastrada",
-        duration: 3000,
-      })
-    } else {
-        toast({
-            title: "Erro",
-            variant: "destructive",
-            description: "Erro ao cadastrar demanda!",
+        resposta: '',
+  })
+
+  useEffect(() => {
+    fetchDemandas()
+  }, [])
+
+  const fetchDemandas = async () => {
+    try {
+      const fetchedDemandas = await getDemandas()
+      setDemandas(fetchedDemandas)
+    } catch (error) {
+      console.error('Error fetching demandas:', error)
+      alert('Falha ao carregar demandas')
+    }
+  }
+
+    const { toast } = useToast()
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        const formDataToSubmit = new FormData()
+        Object.entries(formData).forEach(([key, value]) => {
+          formDataToSubmit.append(key, value)
+        })
+        const result = await createDemanda(formDataToSubmit)
+        if (result.acknowledged) {
+          console.log(`Demanda created with ID: ${result.insertedId}`)
+          setFormData({
+            dataCadastro: '',
+            sgd: '',
+            assunto: '',
+            orgao: '',
+            municipio: '',
+            paciente: '',
+            solicitante: '',
+            dataVencimento: '',
+            resposta: '',
+          })
+          setIsDialogOpen(true)
+          toast({
+            title: "Sucesso",
+            variant: "sucess",
+            description: "Demanda Cadastrada",
             duration: 3000,
           })
-    }
+          fetchDemandas()
+        } else {
+            toast({
+                title: "Erro",
+                variant: "destructive",
+                description: "Erro ao cadastrar demanda!",
+                duration: 3000,
+              })
+        }
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
     }
+
     return (
         <>
             <div className="flex min-h-screen w-full flex-col">
@@ -344,10 +352,24 @@ export default function DemandaAdministrativa(){
                                     onChange={handleInputChange}
                                     />
                                 </div>
+                                <div className="grid grid-cols-4 gap-4">
+                                    <Label htmlFor="resposta" className="text-right">
+                                    Resposta:
+                                    </Label>
+                                    <Textarea disabled
+                                    name="resposta" 
+                                    id="resposta" 
+                                    className="col-span-3 h-48" 
+                                    placeholder="Resposta da Demanda"
+                                    value={formData.resposta}
+                                    onChange={handleInputChange}>
+
+                                    </Textarea>
+                                </div>
                             </div>
                             <DialogFooter className="flex flex-row justify-end">
                                 <DialogClose asChild>
-                                    <Button className="pr-4" type="submit" variant="destructive">Cancelar</Button>
+                                    <Button className="pr-4" type="button" variant="destructive">Cancelar</Button>
                                 </DialogClose>
                             
                             <Button type="submit">Inserir</Button>
@@ -356,6 +378,7 @@ export default function DemandaAdministrativa(){
                             
                         </DialogContent>
                     </Dialog>
+
                 </div>
 
                 <div className="p-8">
@@ -371,24 +394,38 @@ export default function DemandaAdministrativa(){
                     <TableHeader>
                         <TableRow>
                         <TableHead className="w-[150px]">Data</TableHead>
-                        <TableHead>Solicitante</TableHead>
+                        <TableHead>Solicitante/SGD</TableHead>
                         <TableHead>Paciente</TableHead>
                         <TableHead>Orgão</TableHead>
                         <TableHead>Data de Vencimento</TableHead>
-                        <TableHead>Assunto</TableHead>
+                        <TableHead className="hidden md:table-cell">Assunto</TableHead>
+                        <TableHead className="w=[100px]">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                    <TableRow>
-                        <TableCell>
-                        <div className="font-medium">31/08/2024</div>
-                        </TableCell>
-                        <TableCell>Beltrano da SIlva Cardozo</TableCell>
-                        <TableCell>Juscelino Kubitschek</TableCell>
-                        <TableCell>Ministério Público do Estado do Tocantins</TableCell>
-                        <TableCell>15/09/2024</TableCell>
-                        <TableCell className="w-[300px]">ENCAMINHAMENTO DE OFICIO N 0318/2024/GAB/27PJC/MPE/TO COM DILEGÊNCIA 25517/2024</TableCell>
-                        </TableRow>
+                        {demandas.map((demanda) => (
+                            
+                            <TableRow key={demanda._id}>
+                                <TableCell>
+                                    <div className="font-medium w-[100px]">{demanda.dataCadastro}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="font-medium w-[150px]">{demanda.solicitante.toUpperCase()}</div>
+                                    <div className="text-sm text-muted-foreground italic">{demanda.sgd}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="w-[150px]">{demanda.paciente.toUpperCase()}</div>
+                                </TableCell>
+                                <TableCell>{demanda.orgao.toUpperCase()}</TableCell>
+                                <TableCell>
+                                    <div className="w-[150px]">{demanda.dataVencimento}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="hidden md:table-cell">{demanda.assunto.toUpperCase()}</div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        
                     </TableBody>
                 </Table>
                 </div>

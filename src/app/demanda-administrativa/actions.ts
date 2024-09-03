@@ -14,6 +14,7 @@ export interface Demanda {
   paciente: string
   solicitante: string
   dataVencimento: string
+  resposta: string
 }
 
 export async function getDemandas(): Promise<Demanda[]> {
@@ -35,6 +36,7 @@ export async function getDemandas(): Promise<Demanda[]> {
       paciente: demanda.paciente || '',
       solicitante: demanda.solicitante || '',
       dataVencimento: demanda.dataVencimento || '',
+      resposta: demanda.resposta || '',
     }))
   } catch (error) {
     console.error('Error fetching demandas:', error)
@@ -51,6 +53,7 @@ export async function createDemanda(formData: FormData) {
   const paciente = formData.get('paciente') as string
   const solicitante = formData.get('solicitante') as string
   const dataVencimento = formData.get('dataVencimento') as string
+  const resposta = formData.get('resposta') as string
 
   const result = await dbClient
     .db('demandas')
@@ -63,7 +66,8 @@ export async function createDemanda(formData: FormData) {
       municipio,
       paciente,
       solicitante,
-      dataVencimento
+      dataVencimento,
+      resposta,
     })
 
   // Return a plain object with the string representation of ObjectId
@@ -72,6 +76,4 @@ export async function createDemanda(formData: FormData) {
     insertedId: result.insertedId.toString()
   }
 }
-
-
 
