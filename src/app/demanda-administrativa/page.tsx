@@ -1,7 +1,6 @@
-"use client"
-import { useState } from "react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import dbClient from "@/db/mongodb"
+
+import { redirect } from "next/navigation"
 
 import Link from "next/link"
 
@@ -13,7 +12,6 @@ import {
     Package2,
   } from "lucide-react"
 
-import { Calendar } from "@/components/ui/calendar"
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -52,63 +50,39 @@ import {
 
 import { Label } from "@/components/ui/label"
 
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
-
-import { cn } from "@/lib/utils"
-
 import { Textarea } from "@/components/ui/textarea"
 
-  const invoices = [
-    {
-      invoice: "INV001",
-      paymentStatus: "Paid",
-      totalAmount: "$250.00",
-      paymentMethod: "Credit Card",
-    },
-    {
-      invoice: "INV002",
-      paymentStatus: "Pending",
-      totalAmount: "$150.00",
-      paymentMethod: "PayPal",
-    },
-    {
-      invoice: "INV003",
-      paymentStatus: "Unpaid",
-      totalAmount: "$350.00",
-      paymentMethod: "Bank Transfer",
-    },
-    {
-      invoice: "INV004",
-      paymentStatus: "Paid",
-      totalAmount: "$450.00",
-      paymentMethod: "Credit Card",
-    },
-    {
-      invoice: "INV005",
-      paymentStatus: "Paid",
-      totalAmount: "$550.00",
-      paymentMethod: "PayPal",
-    },
-    {
-      invoice: "INV006",
-      paymentStatus: "Pending",
-      totalAmount: "$200.00",
-      paymentMethod: "Bank Transfer",
-    },
-    {
-      invoice: "INV007",
-      paymentStatus: "Unpaid",
-      totalAmount: "$300.00",
-      paymentMethod: "Credit Card",
-    },
-  ]
-
 export default function DemandaAdministrativa(){
-    const [date, setDate] = useState<Date>()
+
+    // server action
+
+    const createDemanda = async (formData: FormData) => {
+        "use server"
+        const dataCadastro = formData.get('data-cadastro') as string
+        const sgd = formData.get('sgd') as string
+        const assunto = formData.get('assunto') as string
+        const orgao = formData.get('orgao') as string
+        const municipio = formData.get('municipio') as string
+        const paciente = formData.get('paciente') as string
+        const solicitante = formData.get('solicitante') as string
+        const dataVencimento = formData.get('data-vencimento') as string
+
+        const demanda = await dbClient
+        .db('demandas')
+        .collection('demanda-administrativa')
+        .insertOne(
+        {dataCadastro,
+        sgd,
+        assunto,
+        orgao,
+        municipio,
+        paciente,
+        solicitante,
+        dataVencimento})
+    
+
+    }
+
     return (
         <>
             <div className="flex min-h-screen w-full flex-col">
@@ -214,6 +188,7 @@ export default function DemandaAdministrativa(){
 
                 <div className="flex flex-row items-center justify-between p-8">
                     <h1 className="text-2xl font-bold">Demandas Administrativas</h1>
+                    
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="outline">Inserir Demanda</Button>
@@ -225,123 +200,98 @@ export default function DemandaAdministrativa(){
                                 Preencha todos os campos.
                             </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="data-cadastro" className="text-right">
-                                Data do Cadastro
-                                </Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !date && "text-muted-foreground"
-                                        )}
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        initialFocus
-                                        locale={ptBR}
-                                        />
-                                    </PopoverContent>
-                            </Popover>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="sgd" className="text-right">
-                                SGD:
-                                </Label>
-                                <Input
-                                id="sgd"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 gap-4">
-                                <Label htmlFor="assunto" className="text-right">
-                                Assunto:
-                                </Label>
-                                <Textarea className="col-span-3 h-48" placeholder="Assunto da demanda">
+                            <form action={createDemanda}>
+                                <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="data-cadastro" className="text-right">
+                                    Data do Cadastro
+                                    </Label>
+                                    <Input
+                                    type="date"
+                                    name="data-cadastro"
+                                    id="data-cadastro"
+                                    className="col-span-1"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="sgd" className="text-right">
+                                    SGD:
+                                    </Label>
+                                    <Input
+                                    name="sgd"
+                                    id="sgd"
+                                    className="col-span-3"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 gap-4">
+                                    <Label htmlFor="assunto" className="text-right">
+                                    Assunto:
+                                    </Label>
+                                    <Textarea name="assunto" id="assunto" className="col-span-3 h-48" placeholder="Assunto da demanda">
 
-                                </Textarea>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="orgao" className="text-right">
-                                Orgão:
-                                </Label>
-                                <Input
-                                id="orgao"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="municipio" className="text-right">
-                                Município:
-                                </Label>
-                                <Input
-                                id="municipio"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="paciente" className="text-right">
-                                Paciente:
-                                </Label>
-                                <Input
-                                id="paciente"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="solicitante" className="text-right">
-                                Solicitante:
-                                </Label>
-                                <Input
-                                id="solicitante"
-                                className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="data-vencimento" className="text-right">
-                                Data de Vencimento
-                                </Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !date && "text-muted-foreground"
-                                        )}
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        initialFocus
-                                        locale={ptBR}
-                                        />
-                                    </PopoverContent>
-                            </Popover>
-                            </div>
-                            </div>
+                                    </Textarea>
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="orgao" className="text-right">
+                                    Orgão:
+                                    </Label>
+                                    <Input
+                                    name="orgao"
+                                    id="orgao"
+                                    className="col-span-3"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="municipio" className="text-right">
+                                    Município:
+                                    </Label>
+                                    <Input
+                                    name="municipio"
+                                    id="municipio"
+                                    className="col-span-3"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="paciente" className="text-right">
+                                    Paciente:
+                                    </Label>
+                                    <Input
+                                    name="paciente"
+                                    id="paciente"
+                                    className="col-span-3"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="solicitante" className="text-right">
+                                    Solicitante:
+                                    </Label>
+                                    <Input
+                                    name="solicitante"
+                                    id="solicitante"
+                                    className="col-span-3"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="data-vencimento" className="text-right">
+                                    Data de Vencimento
+                                    </Label>
+                                    <Input
+                                    type="date"
+                                    name="data-vencimento"
+                                    id="data-vencimento"
+                                    className="col-span-1"
+                                    />
+                                    
+                                </div>
+                                </div>
                             <DialogFooter className="flex flex-row justify-end">
                             <Button className="pr-4" type="submit" variant="destructive">Cancelar</Button>
-                            <Button type="submit">Inserir</Button>
+                                <Button type="submit">Inserir</Button>
                             </DialogFooter>
+                            </form>
                         </DialogContent>
                     </Dialog>
+                    
                 </div>
 
                 <div className="p-8">

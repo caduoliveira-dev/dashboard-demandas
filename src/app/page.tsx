@@ -105,7 +105,6 @@ export default function Home() {
       return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
     }, [])
 
-
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
